@@ -21,6 +21,7 @@ spec:
               args:
                - --policy-config-file=/policy-dir/policy.yaml
                - --v=1
+               - --evict-local-storage-pods
                - --node-selector
                - team!=infra,team!=infra-large,team!=airflow,team!=jhub
           restartPolicy: "Never"

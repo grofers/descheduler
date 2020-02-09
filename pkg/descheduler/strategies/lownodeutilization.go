@@ -17,13 +17,15 @@ limitations under the License.
 package strategies
 
 import (
-	"sort"
-
 	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
 	helper "k8s.io/kubernetes/pkg/api/v1/resource"
+	"os"
+	"sort"
+	"strconv"
+	"time"
 
 	"sigs.k8s.io/descheduler/cmd/descheduler/app/options"
 	"sigs.k8s.io/descheduler/pkg/api"
@@ -260,6 +262,15 @@ func evictPods(inputPods []*v1.Pod,
 				*totalMem -= float64(mUsage)
 				nodeUsage[v1.ResourceMemory] -= api.Percentage(float64(mUsage) / float64(nodeCapacity.Memory().Value()) * 100)
 
+				sleepSeconds := 30 //defualt sleep for 5 seconds
+				value := os.Getenv("SLEEP_AFTER_EVICT")
+
+				if len(value) != 0 {
+					sleepSeconds, _ = strconv.Atoi(value)
+				}
+
+				time.Sleep(time.Duration(sleepSeconds) * time.Second)
+				klog.V(1).Infof("Sleeping for: %#v seconds after evicting a pod", sleepSeconds)
 				klog.V(3).Infof("updated node usage: %#v", nodeUsage)
 				// check if node utilization drops below target threshold or required capacity (cpu, memory, pods) is moved
 				if !IsNodeAboveTargetUtilization(nodeUsage, targetThresholds) || (*totalPods <= 0 && *totalCPU <= 0 && *totalMem <= 0) {
